@@ -5,5 +5,5 @@ repos:
         name: Sync Jupytext Notebooks
         entry: uv run jupytext --sync --pre-commit-mode
         language: system
-        files: '^experiments/.*experiment_.*\.py$'
+        files: '^experiments/.*\.py$'
         pass_filenames: true
