@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: jupytext-sync
+        name: Sync Jupytext Notebooks
+        entry: uv run jupytext --sync --pre-commit-mode
+        language: system
+        files: '^experiments/.*experiment_.*\.py$'
+        pass_filenames: true

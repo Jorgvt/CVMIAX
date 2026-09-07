@@ -1,0 +1,17 @@
+[project]
+name = "cvmiax"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "matplotlib>=3.9.4",
+    "numpy>=2.0.2",
+    "tensorflow>=2.20.0",
+]
+
+[dependency-groups]
+dev = [
+    "jupytext>=1.19.5",
+    "pre-commit>=4.3.0",
+]

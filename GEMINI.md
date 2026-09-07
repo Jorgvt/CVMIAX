@@ -1,5 +1,12 @@
-Use uv to manage the python dependencies and run the scripts as `uv run <script.py`.
-Keep the different experiments organized in subfolders.
-Every experiment should be accompanied by a `.md` file explaining the experiment.
-This repository is aimed at developing experiments and examples to showcase different phenomenon in a course about deep learning based computer vision. Enforce code legibility and representative visualizations.
-The course is using Keras, so we should be using that framework.
+- **Package Management**: Use `uv` to manage Python dependencies and run all scripts as `uv run <script>.py` (e.g. `uv run python experiments/.../run_all.py`).
+- **Framework**: The course uses **Keras** (with TensorFlow backend) for all deep learning models and pipelines.
+- **Repository Purpose**: This repository is designed to develop experiments, proofs, and visualizations showcasing fundamental phenomena in deep learning based computer vision. Enforce clear code legibility, modular design, and publication-quality representative visualizations.
+- **Experiment Subfolder Organization**:
+  - Keep each experiment organized inside a dedicated subfolder under `experiments/` (e.g., `experiments/01_gradient_flow_vgg_vs_resnet/`).
+  - **Theory & Documentation**: Every experiment must include a `README.md` detailing the pedagogical objectives, mathematical formulation, architecture breakdown, and discussion of results.
+  - **Modular Code**: Separate reusable building blocks into modular scripts (e.g. `models.py`, analysis routines, data generators, and visualization scripts).
+  - **Interactive Notebooks & Jupytext**:
+    - Each experiment must have a master interactive lesson script named `experiment_<NN>_<topic>.py` authored in Jupytext **`py:percent`** format (`# %%` for code cells, `# %% [markdown]` for narrative/math cells).
+    - Include a Google Colab badge at the top of the master script/notebook pointing to `https://colab.research.google.com/github/jorgvt/CVMIAX/blob/main/experiments/<experiment_folder>/<notebook>.ipynb`.
+    - Maintain paired `.ipynb` files synchronized using Jupytext (`uv run jupytext --set-formats py:percent,ipynb <script>.py` and `uv run jupytext --sync experiments/**/*.py`).
+
