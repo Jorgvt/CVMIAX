@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Deep learning weights & runtime data
+*.pt
+*.pth
+runs/
+data/
+experiments/**/runs/
+experiments/**/data/

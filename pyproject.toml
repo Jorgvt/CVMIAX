@@ -5,9 +5,20 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "datasets>=4.5.0",
+    "grpcio<1.70.0",
     "matplotlib>=3.9.4",
+    "mplfinance>=0.12.10b0",
     "numpy>=2.0.2",
+    "pandas>=2.3.3",
+    "pyts>=0.13.0",
+    "pywavelets>=1.6.0",
+    "scikit-image>=0.24.0",
+    "scikit-learn>=1.6.1",
+    "scipy>=1.13.1",
     "tensorflow>=2.20.0",
+    "ultralytics>=8.4.123",
+    "yfinance>=1.2.0",
 ]
 
 [dependency-groups]

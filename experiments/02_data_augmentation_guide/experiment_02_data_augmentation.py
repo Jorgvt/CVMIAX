@@ -233,12 +233,69 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
+# ### 3.4 Dense Label Augmentation (Semantic Segmentation Co-Transformation)
+# In dense prediction tasks like semantic segmentation, augmentations fall into two strict categories:
+# 1. **Photometric (Intensity) Augmentations** (Color jitter, brightness, Gaussian blur): Only modify pixel values; target masks $Y$ remain **invariant**.
+# 2. **Spatial (Geometric) Augmentations** (Flips, crops, rotations, scaling): Modify pixel coordinate grids $(x, y) \mapsto (x', y')$; target masks $Y$ **MUST undergo identical spatial transformation** (with Nearest-Neighbor interpolation) to prevent fatal supervision misalignment.
+
+# %%
+from visualize_segmentation_augmentations import (
+    create_segmentation_scene,
+    overlay_mask,
+    render_mask_rgb,
+    apply_color_jitter,
+    apply_horizontal_flip,
+    apply_random_crop
+)
+
+img_seg, mask_seg = create_segmentation_scene()
+
+fig, axes = plt.subplots(2, 3, figsize=(14, 8.5))
+
+# Baseline
+axes[0, 0].imshow(overlay_mask(img_seg, mask_seg))
+axes[0, 0].set_title("Original Input + Mask\n(Baseline Alignment ✓)", color="darkgreen")
+axes[0, 0].axis("off")
+
+# Photometric (Mask invariant)
+img_cj, mask_cj = apply_color_jitter(img_seg, mask_seg)
+axes[0, 1].imshow(overlay_mask(img_cj, mask_cj))
+axes[0, 1].set_title("Color Jitter (Photometric)\nImage transformed, Mask untouched ✓", color="navy")
+axes[0, 1].axis("off")
+
+# Correct Horizontal Flip (Co-transformed)
+img_hf, mask_hf = apply_horizontal_flip(img_seg, mask_seg, flip_mask=True)
+axes[0, 2].imshow(overlay_mask(img_hf, mask_hf))
+axes[0, 2].set_title("Horizontal Flip (CORRECT ✓)\nImage & Mask Co-transformed", color="darkgreen")
+axes[0, 2].axis("off")
+
+# Correct Random Crop (Co-transformed)
+img_rc, mask_rc = apply_random_crop(img_seg, mask_seg, crop_mask=True)
+axes[1, 0].imshow(overlay_mask(img_rc, mask_rc))
+axes[1, 0].set_title("Random Crop (CORRECT ✓)\nImage & Mask Co-transformed", color="darkgreen")
+axes[1, 0].axis("off")
+
+# FATAL BUG: Flip Image only
+img_hf_bug, mask_hf_bug = apply_horizontal_flip(img_seg, mask_seg, flip_mask=False)
+axes[1, 1].imshow(overlay_mask(img_hf_bug, mask_hf_bug))
+axes[1, 1].set_title("Horizontal Flip (FATAL BUG ✗)\nImage flipped, Mask NOT flipped!", color="crimson")
+axes[1, 1].axis("off")
+
+# FATAL BUG: Crop Image only
+img_rc_bug, mask_rc_bug = apply_random_crop(img_seg, mask_seg, crop_mask=False)
+axes[1, 2].imshow(overlay_mask(img_rc_bug, mask_rc_bug))
+axes[1, 2].set_title("Random Crop (FATAL BUG ✗)\nImage cropped, Mask NOT cropped!", color="crimson")
+axes[1, 2].axis("off")
+
+plt.suptitle("Semantic Segmentation: Co-Transformation Rule vs. Unsynchronized Mask Pitfall", fontsize=14, fontweight="bold")
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
 # ## 5. Summary Checklist for Pipeline Design
 #
-# | Augmentation | Safe For | Unsafe / Pitfall For |
-# | :--- | :--- | :--- |
-# | **Horizontal Flip** | Natural objects (dogs, vehicles, general scenes) | OCR, text, symbols, medical scans (X-ray laterality) |
-# | **Vertical Flip** | Satellite images, microscopy, histopathology | Natural outdoor scenes, autonomous driving |
-# | **Random Resized Crop** | General classification | Small object detection (can crop out tiny defects/tumors) |
-# | **Aggressive Color Jitter** | General RGB photographs | Histopathology (H&E stain ratios), blood oxygenation scans |
-# | **Mixup / CutMix** | High-capacity classifiers fighting severe overfit | Dense pixel-level semantic segmentation boundaries |
+# | Augmentation Category | Transformation Type | Mask / Annotation Rule | Interpolation Mode |
+# | :--- | :--- | :--- | :--- |
+# | **Photometric** | Brightness, Contrast, Hue, Saturation, Blur, Noise | **Leave Mask Untouched** | N/A |
+# | **Spatial / Geometric** | Random Crop, Horizontal/Vertical Flip, Rotation, Affine, Elastic | **Co-Transform Mask Synchronously** | **Nearest-Neighbor** (prevents spurious class IDs) |
+

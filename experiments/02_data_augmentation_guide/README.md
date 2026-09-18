@@ -57,9 +57,14 @@ layers.RandomContrast(factor=0.2)
 
 ---
 
-### 1.5 Scale & Geometric Augmentation for Detection and Segmentation
-- **Principle**: Affine transformations (rotation, shearing, translation, scaling) applied **synchronously** to both the input image and all target annotations (bounding boxes, segmentation masks, keypoints).
-- **Figure**: [`05_geometric_detection_segmentation.png`](file:///Users/jorgvt/Developer/CVMIAX/experiments/02_data_augmentation_guide/figures/05_geometric_detection_segmentation.png)
+### 1.5 Scale & Geometric Augmentation for Detection and Segmentation (Co-Transformation)
+- **Principle**: 
+  - **Photometric Transformations** (Color Jitter, Brightness, Blur): Modifies pixel intensities while coordinates remain fixed; Ground Truth mask $Y$ is **invariant**.
+  - **Spatial / Geometric Transformations** (Crops, Flips, Rotations, Affine): Transforms pixel coordinates $(x, y) \mapsto (x', y')$; Ground Truth mask $Y$ **MUST be co-transformed synchronously** using **Nearest-Neighbor** interpolation.
+- **The Fatal Pitfall**: Applying geometric augmentations to the image alone (or using unsynchronized random seeds) corrupts the supervision signal, severely degrading mIoU.
+- **Figures**:
+  - Detection / Segmentation Overview: [`05_geometric_detection_segmentation.png`](file:///Users/jorgvt/Developer/CVMIAX/experiments/02_data_augmentation_guide/figures/05_geometric_detection_segmentation.png)
+  - Detailed Segmentation Co-Transformation vs. Pitfalls: [`06_segmentation_joint_augmentations.png`](file:///Users/jorgvt/Developer/CVMIAX/experiments/02_data_augmentation_guide/figures/06_segmentation_joint_augmentations.png)
 
 ---
 
