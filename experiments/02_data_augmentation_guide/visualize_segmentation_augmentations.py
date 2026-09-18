@@ -115,6 +115,23 @@ def render_mask_rgb(mask):
     return mask_rgb
 
 
+def overlay_mask(img, mask, alpha=0.5):
+    """
+    Overlays a discrete segmentation mask onto an RGB image using alpha blending.
+    
+    Parameters:
+        img: np.ndarray of shape (H, W, 3), dtype uint8
+        mask: np.ndarray of shape (H, W), integer class IDs
+        alpha: float, blending weight for mask (0.0 = image only, 1.0 = mask only)
+        
+    Returns:
+        blended: np.ndarray of shape (H, W, 3), dtype uint8
+    """
+    mask_rgb = render_mask_rgb(mask)
+    blended = (img.astype(np.float32) * (1.0 - alpha) + mask_rgb.astype(np.float32) * alpha).clip(0, 255).astype(np.uint8)
+    return blended
+
+
 # -------------------------------------------------------------------------
 # Augmentation Transformations
 # -------------------------------------------------------------------------
