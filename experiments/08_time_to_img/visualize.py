@@ -12,7 +12,14 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+import sys
 from typing import Any, Dict, List, Optional
+
+# Ensure experiment folder is in sys.path for sibling imports
+_EXPERIMENT_DIR = str(Path(__file__).resolve().parent)
+if _EXPERIMENT_DIR not in sys.path:
+    sys.path.insert(0, _EXPERIMENT_DIR)
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd

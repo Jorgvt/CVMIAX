@@ -39,18 +39,21 @@ from visualize import (
 )
 
 
+BASE_DIR = Path(__file__).resolve().parent
+
+
 def run_experiment_pipeline(
     epochs: int = 12,
     batch_size: int = 32,
     image_size: int = 128,
-    assets_dir: str | Path = "experiments/08_time_to_img/assets",
-    weights_dir: str | Path = "experiments/08_time_to_img/weights",
+    assets_dir: Optional[str | Path] = None,
+    weights_dir: Optional[str | Path] = None,
     force_train: bool = False,
 ) -> pd.DataFrame:
     """Execute the full end-to-end experiment pipeline."""
-    assets_path = Path(assets_dir)
+    assets_path = Path(assets_dir) if assets_dir is not None else (BASE_DIR / "assets")
     assets_path.mkdir(parents=True, exist_ok=True)
-    weights_path = Path(weights_dir)
+    weights_path = Path(weights_dir) if weights_dir is not None else (BASE_DIR / "weights")
     weights_path.mkdir(parents=True, exist_ok=True)
 
     print("=" * 70)

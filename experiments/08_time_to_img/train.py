@@ -15,7 +15,30 @@ from tensorflow import keras
 from dataset import get_encoded_datasets
 from models import get_model, load_model_weights, save_model_weights
 
-DEFAULT_WEIGHTS_DIR = Path("experiments/08_time_to_img/weights")
+
+def _resolve_weights_dir(weights_dir: Optional[Union[str, Path]] = None) -> Path:
+    """Resolve weights directory relatively with fallbacks."""
+    if weights_dir is not None:
+        p = Path(weights_dir)
+        if p.exists():
+            return p
+
+    this_dir = Path(__file__).resolve().parent
+    local_weights = this_dir / "weights"
+    if local_weights.exists():
+        return local_weights
+
+    cwd_weights = Path("experiments/08_time_to_img/weights")
+    if cwd_weights.exists():
+        return cwd_weights
+
+    colab_weights = Path("/content/CVMIAX/experiments/08_time_to_img/weights")
+    if colab_weights.exists():
+        return colab_weights
+
+    if weights_dir is not None:
+        return Path(weights_dir)
+    return local_weights
 
 
 def train_or_load_regime_classifier(
@@ -26,7 +49,7 @@ def train_or_load_regime_classifier(
     learning_rate: float = 1e-3,
     image_size: int = 128,
     cmap: str = "viridis",
-    weights_dir: Union[str, Path] = DEFAULT_WEIGHTS_DIR,
+    weights_dir: Optional[Union[str, Path]] = None,
     force_train: bool = False,
     verbose: int = 1,
 ) -> Tuple[keras.Model, Optional[keras.callbacks.History], Dict[str, Any]]:
@@ -49,7 +72,7 @@ def train_or_load_regime_classifier(
         history: Keras training history object (or None if loaded from disk).
         data_dict: Dictionary containing test datasets and labels for evaluation.
     """
-    weights_path = Path(weights_dir)
+    weights_path = _resolve_weights_dir(weights_dir)
     weights_path.mkdir(parents=True, exist_ok=True)
     checkpoint_file = weights_path / f"{method}_{model_type}.weights.h5"
 

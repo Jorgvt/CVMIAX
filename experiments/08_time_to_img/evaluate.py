@@ -7,7 +7,15 @@ Includes:
 
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 from typing import Any, Dict, List, Optional, Tuple
+
+# Ensure experiment folder is in sys.path for sibling imports
+_EXPERIMENT_DIR = str(Path(__file__).resolve().parent)
+if _EXPERIMENT_DIR not in sys.path:
+    sys.path.insert(0, _EXPERIMENT_DIR)
+
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras

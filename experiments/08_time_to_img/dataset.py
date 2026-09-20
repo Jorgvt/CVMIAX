@@ -11,7 +11,14 @@ and assigns strictly backward-looking regime labels without lookahead bias:
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 from typing import Dict, List, Optional, Tuple, Union
+
+# Ensure experiment folder is in sys.path for sibling imports
+_EXPERIMENT_DIR = str(Path(__file__).resolve().parent)
+if _EXPERIMENT_DIR not in sys.path:
+    sys.path.insert(0, _EXPERIMENT_DIR)
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -27,18 +34,37 @@ REGIME_NAMES: Dict[int, str] = {
 
 
 def load_market_data(
-    csv_path: Union[str, Path] = "experiments/08_time_to_img/data/market_data.csv",
+    csv_path: Optional[Union[str, Path]] = None,
 ) -> pd.DataFrame:
-    """Load multi-asset historical price data."""
-    path = Path(csv_path)
-    if not path.exists():
-        fallback_path = Path("experiments/08_time_to_img/data/sp500_historical.csv")
-        if fallback_path.exists():
-            path = fallback_path
-        else:
-            raise FileNotFoundError(f"Price data not found at {csv_path} or fallback.")
+    """Load multi-asset historical price data with robust relative and fallback path resolution."""
+    candidate_paths: List[Path] = []
+    if csv_path is not None:
+        candidate_paths.append(Path(csv_path))
 
-    df = pd.read_csv(path)
+    # Path relative to dataset.py location
+    this_dir = Path(__file__).resolve().parent
+    candidate_paths.extend([
+        this_dir / "data" / "market_data.csv",
+        this_dir / "data" / "sp500_historical.csv",
+        Path("data/market_data.csv"),
+        Path("experiments/08_time_to_img/data/market_data.csv"),
+        Path("data/sp500_historical.csv"),
+        Path("experiments/08_time_to_img/data/sp500_historical.csv"),
+        Path("/content/CVMIAX/experiments/08_time_to_img/data/market_data.csv"),
+    ])
+
+    resolved_path: Optional[Path] = None
+    for p in candidate_paths:
+        if p.exists():
+            resolved_path = p
+            break
+
+    if resolved_path is None:
+        raise FileNotFoundError(
+            f"Price data not found. Looked in: {[str(p) for p in candidate_paths]}"
+        )
+
+    df = pd.read_csv(resolved_path)
     if "Date" in df.columns:
         df["Date"] = pd.to_datetime(df["Date"])
         df = df.sort_values("Date").reset_index(drop=True)
@@ -135,7 +161,7 @@ def get_encoded_datasets(
     method: str = "fusion",
     image_size: int = 128,
     cmap: str = "viridis",
-    csv_path: Union[str, Path] = "experiments/08_time_to_img/data/market_data.csv",
+    csv_path: Optional[Union[str, Path]] = None,
     batch_size: int = 32,
     window_size: int = 128,
     step_size: int = 8,

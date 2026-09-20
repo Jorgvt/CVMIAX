@@ -39,10 +39,23 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
 
-# Add experiment root to path for local imports
-module_path = str(Path(".").resolve())
-if module_path not in sys.path:
-    sys.path.insert(0, module_path)
+# Add experiment root to path with dynamic fallback for Google Colab / local execution
+if "__file__" in locals():
+    EXPERIMENT_DIR = Path(__file__).resolve().parent
+else:
+    cwd = Path.cwd()
+    if (cwd / "experiments" / "08_time_to_img").exists():
+        EXPERIMENT_DIR = (cwd / "experiments" / "08_time_to_img").resolve()
+    elif (cwd / "data" / "market_data.csv").exists() or cwd.name == "08_time_to_img":
+        EXPERIMENT_DIR = cwd.resolve()
+    elif Path("/content/CVMIAX/experiments/08_time_to_img").exists():
+        EXPERIMENT_DIR = Path("/content/CVMIAX/experiments/08_time_to_img")
+    else:
+        candidates = list(cwd.glob("**/experiments/08_time_to_img"))
+        EXPERIMENT_DIR = candidates[0].resolve() if candidates else cwd.resolve()
+
+if str(EXPERIMENT_DIR) not in sys.path:
+    sys.path.insert(0, str(EXPERIMENT_DIR))
 
 from encoders import compute_gaf, compute_cwt, compute_stft, apply_colormap, batch_encode_windows
 from dataset import load_market_data, extract_asset_windows, compute_regime_labels, get_encoded_datasets, REGIME_NAMES
@@ -57,9 +70,10 @@ from visualize import (
     plot_gradcam_explanations,
 )
 
-print(f"TensorFlow Version: {tf.__version__}")
-print(f"Keras Version:      {keras.__version__}")
-print(f"GPU Available:      {len(tf.config.list_physical_devices('GPU')) > 0}")
+print(f"Experiment Directory: {EXPERIMENT_DIR}")
+print(f"TensorFlow Version:   {tf.__version__}")
+print(f"Keras Version:        {keras.__version__}")
+print(f"GPU Available:        {len(tf.config.list_physical_devices('GPU')) > 0}")
 
 # %% [markdown]
 # ---
@@ -91,8 +105,9 @@ print(f"GPU Available:      {len(tf.config.list_physical_devices('GPU')) > 0}")
 # - **Channel 2**: CWT Scalogram (Log-power volatility energy)
 
 # %%
-# Load multi-asset dataset
-df = load_market_data("data/market_data.csv" if os.path.exists("data/market_data.csv") else "experiments/08_time_to_img/data/market_data.csv")
+# Load multi-asset dataset using dynamic relative resolution with fallbacks
+data_file = EXPERIMENT_DIR / "data" / "market_data.csv"
+df = load_market_data(data_file if data_file.exists() else None)
 w_ret, w_cum, vols, rets, assets = extract_asset_windows(df, window_size=128, step_size=8)
 labels, thresholds = compute_regime_labels(vols, rets)
 
@@ -138,6 +153,7 @@ plt.show()
 EPOCHS = 12
 BATCH_SIZE = 32
 IMG_SIZE = 128
+weights_dir = EXPERIMENT_DIR / "weights"
 
 results = {}
 methods = ["gaf", "cwt", "stft", "fusion"]
@@ -156,6 +172,7 @@ for method in methods:
             epochs=EPOCHS,
             batch_size=BATCH_SIZE,
             image_size=IMG_SIZE,
+            weights_dir=weights_dir,
             force_train=False,
             verbose=0,
         )
