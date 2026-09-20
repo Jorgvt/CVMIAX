@@ -103,8 +103,9 @@ def random_masking(patches, mask_ratio=0.75):
 # ## 3. Visualizing 75% Masking on CIFAR-10 Samples
 
 # %%
-(x_train, _), _ = keras.datasets.cifar10.load_data()
-x_train = x_train.astype("float32") / 255.0
+from dataset import load_mae_cifar10
+
+x_train, _ = load_mae_cifar10(num_train=100)
 
 sample_batch = tf.convert_to_tensor(x_train[:4])
 patch_size = 4

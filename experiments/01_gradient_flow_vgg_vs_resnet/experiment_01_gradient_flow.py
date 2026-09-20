@@ -248,15 +248,9 @@ plt.show()
 # Finally, let's train a shallow (12 layers) and deep (30 layers) model for Plain VGG and ResNet on CIFAR-10 to observe how the gradient vanishing translates into an optimization failure.
 
 # %%
-(x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
-x_train = x_train.astype("float32") / 255.0
-x_test = x_test.astype("float32") / 255.0
-y_train = keras.utils.to_categorical(y_train, 10)
-y_test = keras.utils.to_categorical(y_test, 10)
+from dataset import get_cifar10_subset
 
-# Quick demonstration subset
-x_tr, y_tr = x_train[:8000], y_train[:8000]
-x_va, y_va = x_test[:1500], y_test[:1500]
+(x_tr, y_tr), (x_va, y_va) = get_cifar10_subset(num_train=8000, num_val=1500)
 
 def train_model(model, epochs=8, lr=1e-3):
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=lr), loss="categorical_crossentropy", metrics=["accuracy"])

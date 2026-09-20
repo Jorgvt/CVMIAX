@@ -12,6 +12,7 @@ import keras
 
 from data_generators import create_rotation_batch
 from models import build_rotation_model
+from dataset import load_unlabeled_cifar10
 
 
 def run_rotation_pretext_training(num_samples=5000, epochs=5, batch_size=64, output_dir="figures"):
@@ -19,9 +20,7 @@ def run_rotation_pretext_training(num_samples=5000, epochs=5, batch_size=64, out
     print("\n--- Training Self-Supervised Rotation Prediction Model ---")
 
     # 1. Load Unlabeled Images (we discard the original CIFAR labels!)
-    (x_train, _), (x_test, _) = keras.datasets.cifar10.load_data()
-    x_train = x_train[:num_samples].astype("float32") / 255.0
-    x_test = x_test[:1000].astype("float32") / 255.0
+    x_train, x_test = load_unlabeled_cifar10(num_train=num_samples, num_test=1000)
 
     print(f"Loaded {len(x_train)} unlabeled images for self-supervised pretext training.")
 

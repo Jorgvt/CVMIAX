@@ -65,9 +65,11 @@ def generate_rotation_batch(images):
     ], axis=0)
     return X_rot, y_rot
 
+# %%
 # Load CIFAR-10 sample
-(x_train, _), _ = keras.datasets.cifar10.load_data()
-x_train = x_train.astype("float32") / 255.0
+from dataset import load_unlabeled_cifar10
+
+x_train, _ = load_unlabeled_cifar10(num_train=100)
 sample_images = x_train[:4]
 
 x_rot_batch, y_rot_batch = generate_rotation_batch(sample_images)

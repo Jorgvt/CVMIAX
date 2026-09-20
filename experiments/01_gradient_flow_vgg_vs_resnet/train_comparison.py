@@ -5,27 +5,7 @@ import tensorflow as tf
 import keras
 
 from models import create_model_pair
-
-
-def get_cifar10_subset(num_train=10000, num_val=2000):
-    """
-    Loads and preprocesses CIFAR-10 data subset for fast, clear demonstration.
-    """
-    (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
-
-    x_train = x_train.astype("float32") / 255.0
-    x_test = x_test.astype("float32") / 255.0
-
-    y_train = keras.utils.to_categorical(y_train, 10)
-    y_test = keras.utils.to_categorical(y_test, 10)
-
-    # Subsample for fast training run in course demonstrations
-    x_train_sub = x_train[:num_train]
-    y_train_sub = y_train[:num_train]
-    x_val_sub = x_test[:num_val]
-    y_val_sub = y_test[:num_val]
-
-    return (x_train_sub, y_train_sub), (x_val_sub, y_val_sub)
+from dataset import get_cifar10_subset
 
 
 def train_and_record(model, train_data, val_data, epochs=15, batch_size=128, lr=1e-3):

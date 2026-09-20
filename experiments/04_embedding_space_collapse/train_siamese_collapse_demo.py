@@ -131,10 +131,9 @@ def plot_weight_and_output_comparison(naive_wd_model, naive_model, vicreg_model,
 
 def run_collapse_experiment(steps=250, batch_size=64, output_dir="figures"):
     os.makedirs(output_dir, exist_ok=True)
-    print("\n--- Running Empirical Siamese Collapse vs Regularization Experiment ---")
+    from dataset import load_cifar10_unlabeled_normalized
 
-    (x_train, _), _ = keras.datasets.cifar10.load_data()
-    x_train = x_train[:4000].astype("float32") / 255.0
+    x_train = load_cifar10_unlabeled_normalized(num_samples=4000)
 
     latent_dim = 16
     naive_wd_encoder = build_encoder(latent_dim=latent_dim)

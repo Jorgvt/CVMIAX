@@ -74,12 +74,11 @@ def unnormalize_patches(norm_patches, mean, std):
 # ## 3. Data Preparation (CIFAR-10)
 
 # %%
-(x_train, _), (x_test, _) = keras.datasets.cifar10.load_data()
+from dataset import load_mae_cifar10
 
 # Use 20,000 training images for thorough demonstration
 num_samples = 20000
-x_train = x_train[:num_samples].astype("float32") / 255.0
-x_test = x_test[:1000].astype("float32") / 255.0
+x_train, x_test = load_mae_cifar10(num_train=num_samples, num_test=1000)
 
 patch_size = 4
 image_shape = (32, 32, 3)

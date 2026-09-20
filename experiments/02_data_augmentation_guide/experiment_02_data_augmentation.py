@@ -8,6 +8,9 @@
 #       format_name: percent
 #       format_version: '1.3'
 #       jupytext_version: 1.19.5
+#   kernelspec:
+#     display_name: Python 3
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -67,14 +70,14 @@ def create_natural_scene():
     draw.ellipse([200, 120, 210, 130], fill=(20, 20, 20))
     draw.rectangle([100, 210, 120, 270], fill=(140, 70, 35))
     draw.rectangle([170, 210, 190, 270], fill=(140, 70, 35))
-    return np.array(img)
+    return np.array(img)/255.0
 
 def create_second_scene():
     img = Image.new("RGB", (300, 300), color=(255, 228, 196))
     draw = ImageDraw.Draw(img)
     draw.ellipse([50, 50, 250, 250], fill=(220, 20, 60))  # Red circle
     draw.polygon([(150, 60), (90, 220), (210, 220)], fill=(255, 255, 255))
-    return np.array(img)
+    return np.array(img)/255.0
 
 # %% [markdown]
 # ## 3. Good Defaults in Action
@@ -107,8 +110,8 @@ plt.show()
 
 # %%
 flip_layer = layers.RandomFlip(mode="horizontal")
-bright_layer = layers.RandomBrightness(factor=0.25, seed=123)
-contrast_layer = layers.RandomContrast(factor=0.25, seed=123)
+bright_layer = layers.RandomBrightness(factor=0.05, seed=123)
+contrast_layer = layers.RandomContrast(factor=0.05, seed=123)
 
 flipped = flip_layer(tf.expand_dims(base_img, 0)).numpy()[0]
 jittered = contrast_layer(bright_layer(tf.expand_dims(base_img, 0), training=True), training=True).numpy()[0]
@@ -135,8 +138,8 @@ plt.show()
 # - **CutMix**: Cuts a patch from Image B and pastes it into Image A, weighting labels by area.
 
 # %%
-img_a = create_natural_scene().astype(np.float32) / 255.0
-img_b = create_second_scene().astype(np.float32) / 255.0
+img_a = create_natural_scene().astype(np.float32)
+img_b = create_second_scene().astype(np.float32)
 
 # Mixup with lambda = 0.6
 lam = 0.6
@@ -161,6 +164,29 @@ ax3.axis("off")
 
 plt.tight_layout()
 plt.show()
+
+# %%
+ins = np.concatenate((img_a[None,:], img_b[None,:]))
+labels = np.array([[1.,0.],[0.,1.]])
+outs = layers.MixUp(alpha=0.6, seed=1)({"images":ins, "labels": labels}, training=True)
+fig, axes = plt.subplots(1,2)
+for ax, im, lb in zip(axes, outs["images"], outs["labels"]):
+    ax.imshow(im)
+    ax.set_title(f"Class 1: {lb[0]:.2f} | Class 2: {lb[1]:.2f}")
+    ax.axis("off")
+plt.show()
+
+# %%
+ins = np.concatenate((img_a[None,:], img_b[None,:]))
+labels = np.array([[1.,0.],[0.,1.]])
+outs = layers.CutMix(factor=1, seed=None)({"images":ins, "labels": labels}, training=True)
+fig, axes = plt.subplots(1,2)
+for ax, im, lb in zip(axes, outs["images"], outs["labels"]):
+    ax.imshow(im)
+    ax.set_title(f"Class 1: {lb[0]:.2f} | Class 2: {lb[1]:.2f}")
+    ax.axis("off")
+plt.show()
+
 
 # %% [markdown]
 # ## 4. Label-Altering Failure Modes (Pitfalls)
@@ -237,6 +263,9 @@ plt.show()
 # In dense prediction tasks like semantic segmentation, augmentations fall into two strict categories:
 # 1. **Photometric (Intensity) Augmentations** (Color jitter, brightness, Gaussian blur): Only modify pixel values; target masks $Y$ remain **invariant**.
 # 2. **Spatial (Geometric) Augmentations** (Flips, crops, rotations, scaling): Modify pixel coordinate grids $(x, y) \mapsto (x', y')$; target masks $Y$ **MUST undergo identical spatial transformation** (with Nearest-Neighbor interpolation) to prevent fatal supervision misalignment.
+
+# %%
+# !wget https://raw.githubusercontent.com/Jorgvt/CVMIAX/refs/heads/main/experiments/02_data_augmentation_guide/visualize_segmentation_augmentations.py
 
 # %%
 from visualize_segmentation_augmentations import (

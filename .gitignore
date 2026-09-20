@@ -12,7 +12,11 @@ wheels/
 # Deep learning weights & runtime data
 *.pt
 *.pth
+**.png
+**.git
 runs/
 data/
 experiments/**/runs/
 experiments/**/data/
+experiments/**/weights/
+experiments/**/checkpoints/
