@@ -95,9 +95,13 @@ def render_candlestick_chart(
     fig.patch.set_facecolor(bg_color)
 
     # Plot grid if requested
-    if style in ["grid", "dark_grid", "noisy"]:
-        ax.grid(True, linestyle="--", linewidth=0.7, color=grid_color, alpha=0.7)
+    show_grid = style in ["grid", "dark_grid", "noisy"]
+    if show_grid:
+        ax.grid(True, linestyle="--", linewidth=0.8, color=grid_color, alpha=0.7)
         ax.set_axisbelow(True)
+        ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
     else:
         ax.set_axis_off()
 
@@ -127,13 +131,21 @@ def render_candlestick_chart(
         )
         ax.add_patch(rect)
 
-    # Optional volume bars at bottom
-    if (style in ["volume", "noisy"] or volume is not None) and volume is not None:
-        v_max = np.max(volume) if np.max(volume) > 0 else 1.0
+    # Resolve and plot volume bars if requested
+    vol_data = volume
+    if vol_data is None and "Volume" in df.columns:
+        vol_data = df["Volume"].values
+    elif vol_data is None and style in ["volume", "noisy"]:
+        # Synthesize realistic volume based on candle volatility
+        ranges = highs - lows
+        vol_data = (ranges / (np.mean(ranges) + 1e-6)) * 1e5 * np.random.uniform(0.7, 1.3, size=n_candles)
+
+    if (style in ["volume", "noisy"] or volume is not None) and vol_data is not None:
+        v_max = float(np.max(vol_data)) if np.max(vol_data) > 0 else 1.0
         v_bottom = y_min_axis
-        v_height_scale = 0.20 * total_y_span
+        v_height_scale = 0.18 * total_y_span
         for i in range(n_candles):
-            v_h = (volume[i] / v_max) * v_height_scale
+            v_h = float(vol_data[i] / v_max) * v_height_scale
             v_color = up_color if closes[i] >= opens[i] else down_color
             v_rect = patches.Rectangle(
                 (i - candle_width / 2, v_bottom),
@@ -158,7 +170,8 @@ def render_candlestick_chart(
     # Set exact axis limits
     ax.set_xlim(-0.5, n_candles - 0.5)
     ax.set_ylim(y_min_axis, y_max_axis)
-    ax.axis("off")
+    if not show_grid:
+        ax.axis("off")
 
     # Render canvas to RGB numpy buffer
     canvas.draw()
