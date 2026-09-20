@@ -10,10 +10,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
-import matplotlib
-matplotlib.use("Agg")
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
 import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -89,7 +88,8 @@ def render_candlestick_chart(
         grid_color = "#E0E0E0"
 
     fig_size_inches = image_size / dpi
-    fig = plt.figure(figsize=(fig_size_inches, fig_size_inches), dpi=dpi)
+    fig = Figure(figsize=(fig_size_inches, fig_size_inches), dpi=dpi)
+    canvas = FigureCanvasAgg(fig)
     ax = fig.add_axes([0, 0, 1, 1])  # Occupy full canvas exactly
     ax.set_facecolor(bg_color)
     fig.patch.set_facecolor(bg_color)
@@ -161,10 +161,9 @@ def render_candlestick_chart(
     ax.axis("off")
 
     # Render canvas to RGB numpy buffer
-    fig.canvas.draw()
-    rgba_buffer = fig.canvas.buffer_rgba()
+    canvas.draw()
+    rgba_buffer = canvas.buffer_rgba()
     image_rgb = np.asarray(rgba_buffer)[:, :, :3].copy()
-    plt.close(fig)
 
     # Compute normalized bounding boxes for ground truth patterns
     bboxes: List[BoundingBox] = []

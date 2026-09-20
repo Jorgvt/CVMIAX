@@ -73,56 +73,62 @@ def plot_ground_truth_vs_prediction(
         img_np = image.copy()
 
     h, w, _ = img_np.shape
-    fig, (ax_gt, ax_pred) = plt.subplots(1, 2, figsize=(14, 7), dpi=120)
+    has_gt = ground_truth_boxes is not None
+    has_preds = predictions is not None
 
-    # Plot 1: Ground Truth
-    ax_gt.imshow(img_np)
-    ax_gt.set_title("Ground Truth (TA-Lib Rules)", fontsize=13, fontweight="bold", color="#2E7D32")
-    ax_gt.axis("off")
+    if has_gt and has_preds:
+        fig, (ax_gt, ax_pred) = plt.subplots(1, 2, figsize=(14, 7), dpi=120)
+        panels = [(ax_gt, "Ground Truth (TA-Lib Rules)", "#2E7D32", True),
+                  (ax_pred, "YOLO Model Predictions", "#1565C0", False)]
+    elif has_gt:
+        fig, ax_gt = plt.subplots(1, 1, figsize=(8, 8), dpi=120)
+        panels = [(ax_gt, "Ground Truth (TA-Lib Rules)", "#2E7D32", True)]
+    else:
+        fig, ax_pred = plt.subplots(1, 1, figsize=(8, 8), dpi=120)
+        panels = [(ax_pred, "YOLO Model Predictions", "#1565C0", False)]
 
-    if ground_truth_boxes:
-        for cls_id, xc, yc, bw, bh in ground_truth_boxes:
-            x1 = (xc - bw / 2.0) * w
-            y1 = (yc - bh / 2.0) * h
-            rect_w = bw * w
-            rect_h = bh * h
-            cls_name = ID_TO_PATTERN.get(int(cls_id), f"Class {cls_id}")
+    for ax, panel_title, theme_color, is_gt in panels:
+        ax.imshow(img_np)
+        ax.set_title(panel_title, fontsize=13, fontweight="bold", color=theme_color)
+        ax.axis("off")
 
-            rect = patches.Rectangle(
-                (x1, y1), rect_w, rect_h,
-                linewidth=2.2, edgecolor="#2E7D32", facecolor="none", linestyle="-"
-            )
-            ax_gt.add_patch(rect)
-            ax_gt.text(
-                x1, max(y1 - 6, 12), cls_name,
-                color="white", fontsize=9, fontweight="bold",
-                bbox=dict(facecolor="#2E7D32", edgecolor="none", alpha=0.85, pad=2)
-            )
+        if is_gt and ground_truth_boxes:
+            for cls_id, xc, yc, bw, bh in ground_truth_boxes:
+                x1 = (xc - bw / 2.0) * w
+                y1 = (yc - bh / 2.0) * h
+                rect_w = bw * w
+                rect_h = bh * h
+                cls_name = ID_TO_PATTERN.get(int(cls_id), f"Class {cls_id}")
 
-    # Plot 2: Predictions
-    ax_pred.imshow(img_np)
-    ax_pred.set_title("YOLO Model Predictions", fontsize=13, fontweight="bold", color="#1565C0")
-    ax_pred.axis("off")
+                rect = patches.Rectangle(
+                    (x1, y1), rect_w, rect_h,
+                    linewidth=2.2, edgecolor="#2E7D32", facecolor="none", linestyle="-"
+                )
+                ax.add_patch(rect)
+                ax.text(
+                    x1, max(y1 - 6, 12), cls_name,
+                    color="white", fontsize=9, fontweight="bold",
+                    bbox=dict(facecolor="#2E7D32", edgecolor="none", alpha=0.85, pad=2)
+                )
+        elif not is_gt and predictions:
+            for pred in predictions:
+                cls_id = pred["class_id"]
+                conf = pred["conf"]
+                x1, y1, x2, y2 = pred["xyxy"]
+                cls_name = ID_TO_PATTERN.get(int(cls_id), f"Class {cls_id}")
 
-    if predictions:
-        for pred in predictions:
-            cls_id = pred["class_id"]
-            conf = pred["conf"]
-            x1, y1, x2, y2 = pred["xyxy"]
-            cls_name = ID_TO_PATTERN.get(int(cls_id), f"Class {cls_id}")
+                rect = patches.Rectangle(
+                    (x1, y1), x2 - x1, y2 - y1,
+                    linewidth=2.2, edgecolor="#1565C0", facecolor="none", linestyle="-"
+                )
+                ax.add_patch(rect)
+                ax.text(
+                    x1, max(y1 - 6, 12), f"{cls_name} ({conf:.2f})",
+                    color="white", fontsize=9, fontweight="bold",
+                    bbox=dict(facecolor="#1565C0", edgecolor="none", alpha=0.85, pad=2)
+                )
 
-            rect = patches.Rectangle(
-                (x1, y1), x2 - x1, y2 - y1,
-                linewidth=2.2, edgecolor="#1565C0", facecolor="none", linestyle="-"
-            )
-            ax_pred.add_patch(rect)
-            ax_pred.text(
-                x1, max(y1 - 6, 12), f"{cls_name} ({conf:.2f})",
-                color="white", fontsize=9, fontweight="bold",
-                bbox=dict(facecolor="#1565C0", edgecolor="none", alpha=0.85, pad=2)
-            )
-
-    plt.suptitle(title, fontsize=15, fontweight="bold", y=0.98)
+    plt.suptitle(title, fontsize=14, fontweight="bold", y=0.98 if (has_gt and has_preds) else 1.01)
     plt.tight_layout()
 
     if save_path:

@@ -6,8 +6,6 @@ from pathlib import Path
 # Add experiments/07_candles to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
