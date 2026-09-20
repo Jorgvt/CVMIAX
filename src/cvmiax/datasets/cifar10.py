@@ -16,7 +16,8 @@ import tensorflow as tf
 import keras
 
 GDRIVE_FILE_ID = "1suK4voQ19zuO-usH_CFLPiMWVrDVxmGI"
-GDRIVE_CIFAR10_URL = f"https://drive.google.com/file/d/{GDRIVE_FILE_ID}/view?usp=drive_link"
+GDRIVE_UC_URL = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
+GDRIVE_CIFAR10_URL = GDRIVE_UC_URL
 
 
 def _is_valid_gzip_archive(path: str, min_size_mb: float = 50.0) -> bool:
@@ -33,6 +34,20 @@ def _is_valid_gzip_archive(path: str, min_size_mb: float = 50.0) -> bool:
             magic = f.read(2)
             return magic == b"\x1f\x8b"
     except Exception:
+        return False
+
+
+def _download_with_gdown(url: str, output_path: str) -> bool:
+    """
+    Downloads file using gdown with url as positional argument (compatible with all gdown versions in Colab).
+    """
+    try:
+        import gdown
+        print(f"📥 Downloading CIFAR-10 from {url}...")
+        gdown.download(url, output_path, quiet=False)
+        return _is_valid_gzip_archive(output_path)
+    except Exception as e:
+        print(f"ℹ️ gdown download issue: {e}")
         return False
 
 
@@ -118,38 +133,38 @@ def _load_cifar10_from_gdrive(
                 pass
 
         if not os.path.exists(tar_path):
-            print("📥 Downloading CIFAR-10 dataset from Google Drive...")
-            downloaded = False
-            # Method 1: gdown with explicit ID
-            try:
-                import gdown
-                gdown.download(id=GDRIVE_FILE_ID, output=tar_path, quiet=False)
-                if _is_valid_gzip_archive(tar_path):
-                    downloaded = True
-                else:
-                    if os.path.exists(tar_path):
-                        os.remove(tar_path)
-            except Exception as e:
-                print(f"ℹ️ gdown attempt noted: {e}")
+            # 1. Download via gdown with direct uc?id= URL
+            success = _download_with_gdown(GDRIVE_UC_URL, tar_path)
 
-            # Method 2: Direct streaming fallback
-            if not downloaded:
-                print("📥 Using direct Google Drive streaming downloader...")
+            # 2. If gdown failed or produced non-gzip file, try direct downloader
+            if not success:
+                if os.path.exists(tar_path):
+                    try:
+                        os.remove(tar_path)
+                    except Exception:
+                        pass
+                print("📥 Using direct streaming downloader...")
                 _download_gdrive_direct(GDRIVE_FILE_ID, tar_path)
 
             if not _is_valid_gzip_archive(tar_path):
                 if os.path.exists(tar_path):
-                    os.remove(tar_path)
-                raise ValueError("Downloaded file failed gzip integrity check (not a valid .tar.gz archive).")
+                    try:
+                        os.remove(tar_path)
+                    except Exception:
+                        pass
+                raise ValueError("Downloaded file is not a valid gzip file (cifar-10-python.tar.gz).")
 
         print("📦 Extracting CIFAR-10 archive...")
         try:
             with tarfile.open(tar_path, "r:gz") as tar:
                 tar.extractall(path=data_dir)
         except Exception:
-            # Clean up corrupted file on extract failure so next run can retry
+            # Clean up corrupted file on extract failure so next run can retry cleanly
             if os.path.exists(tar_path):
-                os.remove(tar_path)
+                try:
+                    os.remove(tar_path)
+                except Exception:
+                    pass
             raise
 
     num_train_samples = 50000
