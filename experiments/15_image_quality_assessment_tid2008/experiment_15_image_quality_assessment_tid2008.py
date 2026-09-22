@@ -181,10 +181,31 @@ def logistic_4param(x, beta1, beta2, beta3, beta4):
     return (beta1 - beta2) / (1.0 + np.exp((x - beta3) / (np.abs(beta4) + 1e-7))) + beta2
 
 def fit_logistic(y_pred, y_true):
-    beta0 = [np.max(y_true), np.min(y_true), np.mean(y_pred), np.std(y_pred) + 1e-4]
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+    y_true = np.asarray(y_true, dtype=np.float64)
+    min_t, max_t = float(np.min(y_true)), float(np.max(y_true))
+    mean_p, std_p = float(np.mean(y_pred)), float(np.std(y_pred)) + 1e-4
+    beta0 = [max_t, min_t, mean_p, std_p]
     try:
-        popt, _ = optimize.curve_fit(logistic_4param, y_pred, y_true, p0=beta0, maxfev=10000)
-        return logistic_4param(y_pred, *popt)
+        popt, _ = optimize.curve_fit(
+            logistic_4param,
+            y_pred,
+            y_true,
+            p0=beta0,
+            bounds=([-2.0, -2.0, -np.inf, 1e-4], [12.0, 12.0, np.inf, np.inf]),
+            maxfev=5000,
+        )
+        mapped = logistic_4param(y_pred, *popt)
+        if np.all(np.isfinite(mapped)) and np.std(mapped) > 1e-3:
+            orig_srocc, _ = stats.spearmanr(y_true, y_pred)
+            mapped_plcc, _ = stats.pearsonr(y_true, mapped)
+            if np.sign(mapped_plcc) == np.sign(orig_srocc):
+                return mapped
+    except Exception:
+        pass
+    try:
+        slope, intercept, _, _, _ = stats.linregress(y_pred, y_true)
+        return slope * y_pred + intercept
     except Exception:
         return y_pred
 
@@ -227,7 +248,6 @@ def build_fr_iqa(input_shape=(224, 224, 3)):
     s2 = build_conv_block(64, "stage2")
     s3 = build_conv_block(128, "stage3")
 
-    r1, r2, r3 = s3(s2(s1(ref_in))), s2(s1(ref_in)), s1(ref_in)
     # Ref hierarchical passes
     rf1 = s1(ref_in)
     rf2 = s2(rf1)
