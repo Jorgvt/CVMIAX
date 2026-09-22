@@ -8,6 +8,10 @@
 #       format_name: percent
 #       format_version: '1.3'
 #       jupytext_version: 1.19.5
+#   kernelspec:
+#     display_name: cvmiax (3.11.14)
+#     language: python
+#     name: python3
 # ---
 
 # %% [markdown]
